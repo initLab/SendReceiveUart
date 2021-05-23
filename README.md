@@ -1,4 +1,4 @@
-SendReceiveUart by Vencislav Atanasov (user890104)
+```SendReceiveUart by Vencislav Atanasov (user890104)
 An Arduino project to send and receive RF commands over 433MHz using a pair of receiver and transmitter boards.
 
 Command list:
@@ -18,4 +18,4 @@ Example: SETRECEIVE 0
 Example: SETRECEIVE 1
 
 Received commands format:
-RECEIVE <protocol> <pulse length (ms> <number of bits> <value (long)>
+RECEIVE <protocol> <pulse length (ms> <number of bits> <value (long)>```
