@@ -42,7 +42,11 @@ void recvWithEndMarker() {
  
   while (Serial.available() > 0 && newData == false) {
     rc = Serial.read();
-    
+
+    if (rc == '\r') {
+      continue;
+    }
+
     if (rc == endMarker) {
       receivedChars[ndx] = '\0'; // terminate the string
       ndx = 0;
@@ -97,6 +101,7 @@ void parseSerialCommand() {
     }
 
     Serial.println("SENT");
+    
     return;
   }
 
@@ -106,10 +111,14 @@ void parseSerialCommand() {
     
     if (arg) {
       mySwitch.enableReceive();
+      Serial.println("SETRECEIVE ON");
     }
     else {
       mySwitch.disableReceive();
+      Serial.println("SETRECEIVE OFF");
     }
+
+    return;
   }
 
   if (strcasecmp(strtokIndx, "HELP") == 0 || strcasecmp(strtokIndx, "?") == 0) {
