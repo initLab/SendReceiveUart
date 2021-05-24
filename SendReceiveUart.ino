@@ -8,10 +8,10 @@ boolean newData = false;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("INIT");
+  Serial.println(F("INIT"));
   mySwitch.enableReceive(0); // Receiver on interrupt 0 => that is pin #2
   mySwitch.enableTransmit(10); // Transmitter is connected to Arduino Pin #10
-  Serial.println("READY");
+  Serial.println(F("READY"));
 }
 
 void loop() {
@@ -22,7 +22,7 @@ void loop() {
 
 void switchReceivePrint() {
   if (mySwitch.available()) {
-    Serial.print("RECEIVE ");
+    Serial.print(F("RECEIVE "));
     Serial.print(mySwitch.getReceivedProtocol());
     Serial.print(" ");
     Serial.print(mySwitch.getReceivedDelay());
@@ -37,17 +37,16 @@ void switchReceivePrint() {
 
 void recvWithEndMarker() {
  static byte ndx = 0;
- char endMarker = '\n';
  char rc;
  
   while (Serial.available() > 0 && newData == false) {
     rc = Serial.read();
 
-    if (rc == '\r') {
-      continue;
-    }
-
-    if (rc == endMarker) {
+    if (rc == '\r' || rc == '\n') {
+      if (ndx == 0) {
+        continue;
+      }
+      
       receivedChars[ndx] = '\0'; // terminate the string
       ndx = 0;
       newData = true;
@@ -100,7 +99,7 @@ void parseSerialCommand() {
       mySwitch.send(strtokIndx);
     }
 
-    Serial.println("SENT");
+    Serial.println(F("SENT"));
     
     return;
   }
@@ -111,43 +110,58 @@ void parseSerialCommand() {
     
     if (arg) {
       mySwitch.enableReceive();
-      Serial.println("SETRECEIVE ON");
+      Serial.println(F("SETRECEIVE ON"));
     }
     else {
       mySwitch.disableReceive();
-      Serial.println("SETRECEIVE OFF");
+      Serial.println(F("SETRECEIVE OFF"));
     }
 
+    return;
+  }
+
+  if (strcasecmp(strtokIndx, "PING") == 0) {
+    Serial.println(F("PONG"));
+    
     return;
   }
 
   if (strcasecmp(strtokIndx, "HELP") == 0 || strcasecmp(strtokIndx, "?") == 0) {
-    Serial.println("SendReceiveUart by Vencislav Atanasov (user890104)");
-    Serial.println("https://github.com/initLab/SendReceiveUart");
+    Serial.println(F("SendReceiveUart by Vencislav Atanasov (user890104)"));
+    Serial.println(F("https://github.com/initLab/SendReceiveUart"));
     Serial.println();
-    Serial.println("Command list:");
-    Serial.println("HELP - this message");
-    Serial.println("SEND - send RF command.");
-    Serial.println("Format: SEND <protocol> <pulse length (ms)> <repeat times> <type/length> <value>");
-    Serial.println("For protocol ID, check RCSwitch.cpp");
-    Serial.println("Type/Length = 0 means that value is a string of zeroes and ones");
-    Serial.println("Type/Length > 1 indicates the number of bits, value is the actual data as long int");
-    Serial.println("Example: SEND 1 350 15 24 4242");
-    Serial.println("Example: SEND 1 350 15 0 0000111100001111");
+    Serial.println(F("POSSIBLE COMMANDS TO SEND:"));
+    Serial.println(F("HELP or ? - this message"));
+    Serial.println(F("SEND - send RF command."));
+    Serial.println(F("Format: SEND <protocol> <pulse length (ms)> <repeat times> <type/length> <value>"));
+    Serial.println(F("For protocol ID, check RCSwitch.cpp"));
+    Serial.println(F("Type/Length = 0 means that value is a string of zeroes and ones"));
+    Serial.println(F("Type/Length > 1 indicates the number of bits, value is the actual data as long int"));
+    Serial.println(F("Example: SEND 1 350 15 24 4242"));
+    Serial.println(F("Example: SEND 1 350 15 0 0000111100001111"));
+    Serial.println(F("Response: SENT"));
     Serial.println();
-    Serial.println("SETRECEIVE - enable/disable monitoring for RF commands");
-    Serial.println("Format: SETRECEIVE <flag>");
-    Serial.println("Flag = 0 means disable, everything else means enable");
-    Serial.println("Example: SETRECEIVE 0");
-    Serial.println("Example: SETRECEIVE 1");
+    Serial.println(F("SETRECEIVE - enable/disable monitoring for RF commands"));
+    Serial.println(F("Format: SETRECEIVE <flag>"));
+    Serial.println(F("Flag = 0 means disable, everything else means enable"));
+    Serial.println(F("Example: SETRECEIVE 0"));
+    Serial.println(F("Example: SETRECEIVE 1"));
+    Serial.println(F("Response: SETRECEIVE <ON/OFF>"));
     Serial.println();
-    Serial.println("Received commands format:");
-    Serial.println("RECEIVE <protocol> <pulse length (ms> <number of bits> <value (long)>");
+    Serial.println(F("PING - check if device is responding to serial commands"));
+    Serial.println(F("Format: PING"));
+    Serial.println(F("Response: PONG"));
     Serial.println();
-    Serial.println("End of HELP");
+    Serial.println(F("POSSIBLE RESPONSE MESSAGES:"));
+    Serial.println(F("INIT - program has started"));
+    Serial.println(F("READY - receiving and transmitting is enabled"));
+    Serial.println(F("RECEIVE - a new command has just been received over RF"));
+    Serial.println(F("Format: RECEIVE <protocol> <pulse length (ms)> <number of bits> <value (long)>"));
+    Serial.println();
+    Serial.println(F("End of HELP"));
     
     return;
   }
   
-  Serial.println("ERROR COMMAND UNKNOWN");
+  Serial.println(F("ERROR COMMAND UNKNOWN"));
 }
