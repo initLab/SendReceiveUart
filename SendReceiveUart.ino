@@ -6,10 +6,14 @@ const byte numChars = 64;
 char receivedChars[numChars]; // an array to store the received data
 boolean newData = false;
 
+void enableReceive() {
+  mySwitch.enableReceive(0); // Receiver on interrupt 0 => that is pin #2
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.println(F("INIT"));
-  mySwitch.enableReceive(0); // Receiver on interrupt 0 => that is pin #2
+  enableReceive();
   mySwitch.enableTransmit(10); // Transmitter is connected to Arduino Pin #10
   Serial.println(F("READY"));
 }
@@ -109,7 +113,7 @@ void parseSerialCommand() {
     arg = atoi(strtokIndx); // convert this part to an integer
     
     if (arg) {
-      mySwitch.enableReceive();
+      enableReceive();
       Serial.println(F("SETRECEIVE ON"));
     }
     else {
