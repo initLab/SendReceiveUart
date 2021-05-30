@@ -1,3 +1,4 @@
+#include <EEPROM.h>
 #include <RCSwitch.h>
 
 RCSwitch mySwitch = RCSwitch();
@@ -6,14 +7,23 @@ const byte numChars = 64;
 char receivedChars[numChars]; // an array to store the received data
 boolean newData = false;
 
-void enableReceive() {
-  mySwitch.enableReceive(0); // Receiver on interrupt 0 => that is pin #2
-}
-
 void setup() {
   Serial.begin(115200);
+  while (!Serial);
   Serial.println(F("INIT"));
-  enableReceive();
+
+  const byte receiveFlag = EEPROM.read(0);
+
+  // 0xFF = chip erase state
+  // 0x00 = receive off
+  // 0x01 = receive on
+  if (receiveFlag == 0xFF || receiveFlag == 1) {
+    enableReceive();
+  }
+  else {
+    disableReceive();
+  }
+  
   mySwitch.enableTransmit(10); // Transmitter is connected to Arduino Pin #10
   Serial.println(F("READY"));
 }
@@ -22,6 +32,18 @@ void loop() {
   switchReceivePrint();
   recvWithEndMarker();
   parseSerialCommand();
+}
+
+void enableReceive() {
+  EEPROM.update(0, 1);
+  mySwitch.enableReceive(0); // Receiver on interrupt 0 => that is pin #2
+  Serial.println(F("SETRECEIVE ON"));
+}
+
+void disableReceive() {
+  EEPROM.update(0, 0);
+  mySwitch.disableReceive();
+  Serial.println(F("SETRECEIVE OFF"));
 }
 
 void switchReceivePrint() {
@@ -114,11 +136,9 @@ void parseSerialCommand() {
     
     if (arg) {
       enableReceive();
-      Serial.println(F("SETRECEIVE ON"));
     }
     else {
-      mySwitch.disableReceive();
-      Serial.println(F("SETRECEIVE OFF"));
+      disableReceive();
     }
 
     return;
