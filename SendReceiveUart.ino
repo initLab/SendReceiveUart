@@ -51,11 +51,11 @@ void switchReceivePrint() {
     Serial.print(F("RECEIVE "));
     Serial.print(mySwitch.getReceivedProtocol());
     Serial.print(" ");
-    Serial.print(mySwitch.getReceivedDelay());
-    Serial.print(" ");
     Serial.print(mySwitch.getReceivedBitlength());
     Serial.print(" ");
-    Serial.println(mySwitch.getReceivedValue());
+    Serial.print(mySwitch.getReceivedValue());
+    Serial.print(" ");
+    Serial.println(mySwitch.getReceivedDelay());
     mySwitch.resetAvailable();
   }
 }
@@ -95,34 +95,58 @@ void parseSerialCommand() {
 
   newData = false;
   char* strtokIndx; // this is used by strtok() as an index
+  char* sCodeWord;
   int arg;
+  unsigned long code;
   
   strtokIndx = strtok(receivedChars, " "); // get the first part - the string
 
   if (strcasecmp(strtokIndx, "SEND") == 0) {
     strtokIndx = strtok(NULL, " "); // this continues where the previous call left off
-    arg = atoi(strtokIndx); // convert this part to an integer
-    mySwitch.setProtocol(arg);
+    int nProtocol = atoi(strtokIndx); // convert this part to an integer
+    mySwitch.setProtocol(nProtocol);
 
     strtokIndx = strtok(NULL, " "); // this continues where the previous call left off
-    arg = atoi(strtokIndx); // convert this part to an integer
-    mySwitch.setPulseLength(arg);
-
-    strtokIndx = strtok(NULL, " "); // this continues where the previous call left off
-    arg = atoi(strtokIndx); // convert this part to an integer
-    mySwitch.setRepeatTransmit(arg);
-
-    strtokIndx = strtok(NULL, " "); // this continues where the previous call left off
-    arg = atoi(strtokIndx); // convert this part to an integer
+    int length = atoi(strtokIndx); // convert this part to an integer
 
     strtokIndx = strtok(NULL, " "); // this continues where the previous call left off
 
-    if (arg) {
-      unsigned long code = atol(strtokIndx); // convert this part to an integer
-      mySwitch.send(code, arg);
+    if (length) {
+      code = atol(strtokIndx); // convert this part to an integer
     }
     else {
-      mySwitch.send(strtokIndx);
+      sCodeWord = strtokIndx;
+    }
+
+    strtokIndx = strtok(NULL, " "); // this continues where the previous call left off
+
+    if (strtokIndx) {
+      int pulseLength = atoi(strtokIndx); // convert this part to an integer
+      
+      if (pulseLength) {
+        mySwitch.setPulseLength(pulseLength);
+      }
+    }  
+
+    strtokIndx = strtok(NULL, " "); // this continues where the previous call left off
+
+    int nRepeatTransmit = 10;
+    
+    if (strtokIndx) {
+      arg = atoi(strtokIndx); // convert this part to an integer
+
+      if (arg) {
+        nRepeatTransmit = arg;
+      }
+    }
+    
+    mySwitch.setRepeatTransmit(nRepeatTransmit);
+
+    if (length) {
+      mySwitch.send(code, length);
+    }
+    else {
+      mySwitch.send(sCodeWord);
     }
 
     Serial.println(F("SENT"));
@@ -157,12 +181,18 @@ void parseSerialCommand() {
     Serial.println(F("POSSIBLE COMMANDS TO SEND:"));
     Serial.println(F("HELP or ? - this message"));
     Serial.println(F("SEND - send RF command."));
-    Serial.println(F("Format: SEND <protocol> <pulse length (ms)> <repeat times> <type/length> <value>"));
+    Serial.println(F("Format: SEND <protocol> <type/length> <value> [pulse length (ms)] [repeat times, def=10]"));
     Serial.println(F("For protocol ID, check RCSwitch.cpp"));
     Serial.println(F("Type/Length = 0 means that value is a string of zeroes and ones"));
     Serial.println(F("Type/Length > 1 indicates the number of bits, value is the actual data as long int"));
-    Serial.println(F("Example: SEND 1 350 15 24 4242"));
-    Serial.println(F("Example: SEND 1 350 15 0 0000111100001111"));
+    Serial.println(F("Example: SEND 1 24 4242"));
+    Serial.println(F("Example: SEND 1 24 4242 350"));
+    Serial.println(F("Example: SEND 1 24 4242 0 15"));
+    Serial.println(F("Example: SEND 1 24 4242 350 15"));
+    Serial.println(F("Example: SEND 1 0 0000111100001111"));
+    Serial.println(F("Example: SEND 1 0 0000111100001111 350"));
+    Serial.println(F("Example: SEND 1 0 0000111100001111 0 15"));
+    Serial.println(F("Example: SEND 1 0 0000111100001111 350 15"));
     Serial.println(F("Response: SENT"));
     Serial.println();
     Serial.println(F("SETRECEIVE - enable/disable monitoring for RF commands"));
@@ -180,7 +210,7 @@ void parseSerialCommand() {
     Serial.println(F("INIT - program has started"));
     Serial.println(F("READY - receiving and transmitting is enabled"));
     Serial.println(F("RECEIVE - a new command has just been received over RF"));
-    Serial.println(F("Format: RECEIVE <protocol> <pulse length (ms)> <number of bits> <value (long)>"));
+    Serial.println(F("Format: RECEIVE <protocol> <number of bits> <value (long)> <pulse length (ms)>"));
     Serial.println();
     Serial.println(F("End of HELP"));
     
